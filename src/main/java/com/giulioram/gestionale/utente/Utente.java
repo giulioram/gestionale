@@ -1,11 +1,8 @@
 package com.giulioram.gestionale.utente;
 
 import com.giulioram.gestionale.event.Event;
-import com.giulioram.gestionale.event.EventNotFoundException;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
+import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,6 +11,7 @@ import java.util.List;
 @Entity
 public class Utente implements Serializable {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
     private String userName;
     private String password;
@@ -22,6 +20,12 @@ public class Utente implements Serializable {
     private List<Event> eventi = new ArrayList<>();
 
     public Utente() {}
+
+    public Utente(Integer id, String userName, String password) {
+        this.id = id;
+        this.userName = userName;
+        this.password = password;
+    }
 
     public void addEvent(Event evento) {
         evento.setOwner(this);
@@ -32,9 +36,14 @@ public class Utente implements Serializable {
         Event eventToRemove = eventi.stream()
                 .filter(event -> id.equals(event.getId()))
                 .findFirst()
-                .orElseThrow(() -> new EventNotFoundException(id));
+                .orElseThrow(() -> new ObjectNotFoundException("Event", id));
         eventi.remove(eventToRemove);
         return eventToRemove;
+    }
+
+    public void removeAllEvents() {
+        eventi.stream().forEach(evento -> evento.setOwner(null));
+        this.eventi.clear();
     }
 
     public void setEventi(List<Event> eventi) {
@@ -69,7 +78,7 @@ public class Utente implements Serializable {
         return password;
     }
 
-    public Integer getNumberOfEvets() {
+    public Integer getNumberOfEvents() {
         return this.eventi.size();
     }
 }

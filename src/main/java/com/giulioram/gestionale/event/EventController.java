@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 
 @RestController
-@RequestMapping("/api/v1/events")
+@RequestMapping("${api.endpoint.base-url}/events")
 public class EventController {
 
     private final EventService eventService;
