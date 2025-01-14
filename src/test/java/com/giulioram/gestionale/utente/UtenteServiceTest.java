@@ -1,5 +1,9 @@
 package com.giulioram.gestionale.utente;
 
+import com.giulioram.gestionale.enums.CategoryEnum;
+import com.giulioram.gestionale.enums.StatusEnum;
+import com.giulioram.gestionale.event.Event;
+import com.giulioram.gestionale.event.EventRepository;
 import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +29,9 @@ public class UtenteServiceTest {
 
     @Mock
     UtenteRepository utenteRepository;
+
+    @Mock
+    EventRepository eventRepository;
 
     @InjectMocks
     UtenteService utenteService;
@@ -147,5 +155,57 @@ public class UtenteServiceTest {
         });
 
         verify(utenteRepository, times(1)).findById(1);
+    }
+
+    @Test
+    void testAssignEventSuccess() {
+        //Given
+        Event event1 = new Event("123456", LocalDateTime.now(), "uno", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
+        Utente utente1 = new Utente(12, "unUsername", "");
+        utente1.addEvent(event1);
+        Utente utente2 = new Utente(13, "altroUsername", "");
+        given(this.eventRepository.findById("123456")).willReturn(Optional.of(event1));
+        given(this.utenteRepository.findById(13)).willReturn(Optional.of(utente2));
+        //When
+        this.utenteService.assignEvent(13, "123456");
+        //Then
+        assertThat(event1.getOwner().getId()).isEqualTo(13);
+        assertThat(utente2.getEventi()).contains(event1);
+    }
+
+    @Test
+    void testAssignEventErrorWithNonExistentUtenteId() {
+        //Given
+        Event event1 = new Event("123456", LocalDateTime.now(), "uno", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
+        Utente utente1 = new Utente(12, "unUsername", "");
+        utente1.addEvent(event1);
+
+        given(this.eventRepository.findById("123456")).willReturn(Optional.of(event1));
+        given(this.utenteRepository.findById(13)).willReturn(Optional.empty());
+        //When
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
+            this.utenteService.assignEvent(13, "123456");
+        });
+
+        //Then
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find utente with Id 13 :(");
+        assertThat(event1.getOwner().getId()).isEqualTo(12);
+    }
+
+    @Test
+    void testAssignEventErrorWithNonExistentEventId() {
+        //Given
+
+        given(this.eventRepository.findById("123456")).willReturn(Optional.empty());
+        //When
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
+            this.utenteService.assignEvent(13, "123456");
+        });
+        //Then
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find event with Id 123456 :(");
     }
 }

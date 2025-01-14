@@ -79,7 +79,7 @@ public class UtenteControllerTest {
     void testFindUtenteByIdNotFound() throws Exception {
         given(utenteService.findById(1)).willThrow(new ObjectNotFoundException("Utente", 1));
 
-        this.mockMvc.perform(get("/api/v1/utenti/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Utente with Id 1 :("))
@@ -90,7 +90,7 @@ public class UtenteControllerTest {
     void testFindAllUtentiSuccess() throws Exception {
         given(this.utenteService.findAllUtenti()).willReturn(this.utenti);
 
-        this.mockMvc.perform(get("/api/v1/utenti").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/utenti").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
@@ -116,7 +116,7 @@ public class UtenteControllerTest {
 
         given(this.utenteService.save(Mockito.any(Utente.class))).willReturn(e);
 
-        this.mockMvc.perform(post("/api/v1/utenti").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(this.baseUrl + "/utenti").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -138,7 +138,7 @@ public class UtenteControllerTest {
 
         given(this.utenteService.update(eq(123456), Mockito.any(Utente.class))).willReturn(updatedUtente);
 
-        this.mockMvc.perform(put("/api/v1/utenti/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -155,7 +155,7 @@ public class UtenteControllerTest {
 
         given(this.utenteService.update(eq(123456), Mockito.any(Utente.class))).willThrow(new ObjectNotFoundException("Utente", 123456));
 
-        this.mockMvc.perform(put("/api/v1/utenti/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Utente with Id 123456 :("))
@@ -166,7 +166,7 @@ public class UtenteControllerTest {
     void testDeleteUtenteSuccess() throws Exception {
         doNothing().when(utenteService).delete(1);
 
-        this.mockMvc.perform(delete("/api/v1/utenti/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -177,10 +177,46 @@ public class UtenteControllerTest {
     void testDeleteUtenteErrorWithNonExistentId() throws Exception {
         doThrow(new ObjectNotFoundException("Utente", 1)).when(this.utenteService).delete(1);
 
-        this.mockMvc.perform(delete("/api/v1/utenti/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Utente with Id 1 :("))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void testAssignEventSuccess() throws Exception {
+        //Given
+        doNothing().when(this.utenteService).assignEvent(2, "123456");
+        //When & Then
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/2/events/123456").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Event Assignment Success"))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void testAssignEventErrorWithNonExistentUtenteId() throws Exception {
+        //Given
+        doThrow(new ObjectNotFoundException("utente", 5)).when(this.utenteService).assignEvent(5, "123456");
+        //When & Then
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/5/events/123456").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").value("Could not find utente with Id 5 :("))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void testAssignEventErrorWithNonExistentEventId() throws Exception {
+        //Given
+        doThrow(new ObjectNotFoundException("event", "123457")).when(this.utenteService).assignEvent(9, "123457");
+        //When & Then
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/9/events/123457").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").value("Could not find event with Id 123457 :("))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 }

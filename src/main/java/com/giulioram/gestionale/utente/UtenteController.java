@@ -64,4 +64,10 @@ public class UtenteController {
         this.utenteService.delete(utenteId);
         return new Result(true, HttpStatus.OK.value(), "Delete Success");
     }
+
+    @PutMapping("/{utenteId}/events/{eventId}")
+    public Result assignEvent(@PathVariable Integer utenteId, @PathVariable String eventId) {
+        this.utenteService.assignEvent(utenteId, eventId);
+        return new Result(true, HttpStatus.OK.value(), "Event Assignment Success");
+    }
 }
