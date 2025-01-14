@@ -32,13 +32,12 @@ public class Utente implements Serializable {
         this.eventi.add(evento);
     }
 
-    public Event removeEvent(String id) {
-        Event eventToRemove = eventi.stream()
-                .filter(event -> id.equals(event.getId()))
-                .findFirst()
-                .orElseThrow(() -> new ObjectNotFoundException("Event", id));
-        eventi.remove(eventToRemove);
-        return eventToRemove;
+    public Event removeEvent(Event eventoToBeRemoved) {
+        if(eventi.contains(eventoToBeRemoved)) {
+            eventoToBeRemoved.setOwner(null);
+            eventi.remove(eventoToBeRemoved);
+        }
+        return eventoToBeRemoved;
     }
 
     public void removeAllEvents() {
