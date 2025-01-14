@@ -1,6 +1,7 @@
 package com.giulioram.gestionale.event;
 
 import com.giulioram.gestionale.event.utils.Snowflake;
+import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,7 +19,7 @@ public class EventService {
     }
 
     public Event findById(String eventId) {
-        return this.eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
+        return this.eventRepository.findById(eventId).orElseThrow(() -> new ObjectNotFoundException("Event", eventId));
     }
 
     public List<Event> findAllEvents() {
@@ -39,12 +40,12 @@ public class EventService {
                     oldEvent.setCategory(update.getCategory());
                     oldEvent.setStatus(update.getStatus());
                     return eventRepository.save(oldEvent);
-                }).orElseThrow(() -> new EventNotFoundException(eventId));
+                }).orElseThrow(() -> new ObjectNotFoundException("Event", eventId));
     }
 
     public void delete(String eventId) {
         this.eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventNotFoundException(eventId));
+                .orElseThrow(() -> new ObjectNotFoundException("Event", eventId));
         this.eventRepository.deleteById(eventId);
     }
 }

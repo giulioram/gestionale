@@ -3,6 +3,7 @@ package com.giulioram.gestionale.event;
 import com.giulioram.gestionale.enums.CategoryEnum;
 import com.giulioram.gestionale.enums.StatusEnum;
 import com.giulioram.gestionale.event.utils.Snowflake;
+import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,8 +54,6 @@ class EventServiceTest {
     @Test
     void testFindByIdSuccess() {
         //given
-        List<String> tags = new ArrayList<>();
-        tags.add("un_tag");
         Event e = new Event();
         e.setId("1");
         e.setCategory(CategoryEnum.EVENTO);
@@ -77,8 +76,8 @@ class EventServiceTest {
         Throwable thrown = catchThrowable(() ->{
             Event returnedEvent = eventService.findById("1");
         });
-        assertThat(thrown).isInstanceOf(EventNotFoundException.class)
-                .hasMessage("Could not find Event with id 1 :(");
+        assertThat(thrown).isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find Event with Id 1 :(");
     }
 
     @Test
@@ -91,8 +90,6 @@ class EventServiceTest {
 
     @Test
     void testSaveSuccess() {
-        List<String> tags = new ArrayList<>();
-        tags.add("un_tag");
         Event e = new Event();
         e.setCategory(CategoryEnum.EVENTO);
         e.setName("descrizione evento x");
@@ -147,7 +144,7 @@ class EventServiceTest {
 
         given(eventRepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(EventNotFoundException.class, () -> {
+        assertThrows(ObjectNotFoundException.class, () -> {
             eventService.update("1", updateEvent);
         });
 
@@ -175,7 +172,7 @@ class EventServiceTest {
     void testDeleteNotFound() {
         given(eventRepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(EventNotFoundException.class, () -> {
+        assertThrows(ObjectNotFoundException.class, () -> {
             eventService.delete("1");
         });
 

@@ -12,7 +12,7 @@ public class UtenteToUtenteDtoConverter implements Converter<Utente, UtenteDto> 
         UtenteDto utenteDto = new UtenteDto(source.getId(),
                 source.getUserName(),
                 source.getPassword(),
-                source.getNumberOfEvets());
+                source.getNumberOfEvents());
         return utenteDto;
     }
 }

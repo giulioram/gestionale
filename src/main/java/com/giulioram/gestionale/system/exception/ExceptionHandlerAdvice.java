@@ -1,6 +1,5 @@
 package com.giulioram.gestionale.system.exception;
 
-import com.giulioram.gestionale.event.EventNotFoundException;
 import com.giulioram.gestionale.system.Result;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -17,9 +16,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class ExceptionHandlerAdvice {
 
-    @ExceptionHandler(EventNotFoundException.class)
+    @ExceptionHandler(ObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    Result handleEventNotFoundException(EventNotFoundException ex) {
+    Result handleObjectNotFoundException(Exception ex) {
         return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage());
     }
 

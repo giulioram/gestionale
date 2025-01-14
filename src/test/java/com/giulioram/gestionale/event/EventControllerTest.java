@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.giulioram.gestionale.enums.CategoryEnum;
 import com.giulioram.gestionale.enums.StatusEnum;
 import com.giulioram.gestionale.event.dto.EventDto;
+import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -50,6 +52,9 @@ class EventControllerTest {
     @Mock
     EventService eventService;
 
+    @Value("${api.endpoint.base-url}")
+    String baseUrl;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -68,7 +73,7 @@ class EventControllerTest {
         Event event = new Event("1", LocalDateTime.now(), "uno", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
         when(eventService.findById("1")).thenReturn(event);
 
-        this.mockMvc.perform(get("/api/v1/events/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -77,12 +82,12 @@ class EventControllerTest {
 
     @Test
     void testFindEventByIdNotFound() throws Exception {
-        given(eventService.findById("1")).willThrow(new EventNotFoundException("1"));
+        given(eventService.findById("1")).willThrow(new ObjectNotFoundException("Event", "1"));
 
-        this.mockMvc.perform(get("/api/v1/events/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.message").value("Could not find Event with id 1 :("))
+                .andExpect(jsonPath("$.message").value("Could not find Event with Id 1 :("))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
@@ -90,7 +95,7 @@ class EventControllerTest {
     void testFindAllEventsSuccess() throws Exception {
         given(this.eventService.findAllEvents()).willReturn(this.events);
 
-        this.mockMvc.perform(get("/api/v1/events").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/events").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
@@ -122,7 +127,7 @@ class EventControllerTest {
 
         given(this.eventService.save(Mockito.any(Event.class))).willReturn(e);
 
-        this.mockMvc.perform(post("/api/v1/events").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(this.baseUrl + "/events").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -150,7 +155,7 @@ class EventControllerTest {
 
         given(this.eventService.update(eq("123456"), Mockito.any(Event.class))).willReturn(updatedEvent);
 
-        this.mockMvc.perform(put("/api/v1/events/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/events/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -169,12 +174,12 @@ class EventControllerTest {
                 null);
         String jsonObj = objectMapper.writeValueAsString(eventDto);
 
-        given(this.eventService.update(eq("123456"), Mockito.any(Event.class))).willThrow(new EventNotFoundException("123456"));
+        given(this.eventService.update(eq("123456"), Mockito.any(Event.class))).willThrow(new ObjectNotFoundException("Event", "123456"));
 
-        this.mockMvc.perform(put("/api/v1/events/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/events/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.message").value("Could not find Event with id 123456 :("))
+                .andExpect(jsonPath("$.message").value("Could not find Event with Id 123456 :("))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
@@ -182,7 +187,7 @@ class EventControllerTest {
     void testDeleteEventSuccess() throws Exception {
         doNothing().when(eventService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/events/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -191,12 +196,12 @@ class EventControllerTest {
 
     @Test
     void testDeleteEventErrorWithNonExistentId() throws Exception {
-        doThrow(new EventNotFoundException("1")).when(this.eventService).delete("1");
+        doThrow(new ObjectNotFoundException("Event", "1")).when(this.eventService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/events/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.message").value("Could not find Event with id 1 :("))
+                .andExpect(jsonPath("$.message").value("Could not find Event with Id 1 :("))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 }
