@@ -40,18 +40,15 @@ public class UtenteServiceTest {
 
     @BeforeEach
     void setUp() {
-        Utente utente1 = new Utente(1, "franco", "");
-        Utente utente2 = new Utente(2, "gigi", "");
+        Utente utente1 = new Utente(1, "franco", "", true, "admin");
+        Utente utente2 = new Utente(2, "gino", "", true, "admin");
         utenti = List.of(utente1, utente2);
     }
 
     @Test
     void testFindByIdSuccess() {
 //given
-        Utente u = new Utente();
-        u.setId(1);
-        u.setUserName("franco");
-        u.setPassword("");
+        Utente u = new Utente(1, "franco", "", true, "admin");
         given(utenteRepository.findById(1)).willReturn(Optional.of(u));
         Utente returnedUtente = utenteService.findById(1);
         assertThat(returnedUtente.getId()).isEqualTo(u.getId());
@@ -161,9 +158,9 @@ public class UtenteServiceTest {
     void testAssignEventSuccess() {
         //Given
         Event event1 = new Event("123456", LocalDateTime.now(), "uno", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
-        Utente utente1 = new Utente(12, "unUsername", "");
+        Utente utente1 = new Utente(12, "unUsername", "", true, "admin");
         utente1.addEvent(event1);
-        Utente utente2 = new Utente(13, "altroUsername", "");
+        Utente utente2 = new Utente(13, "altroUsername", "", true, "admin");
         given(this.eventRepository.findById("123456")).willReturn(Optional.of(event1));
         given(this.utenteRepository.findById(13)).willReturn(Optional.of(utente2));
         //When
@@ -177,7 +174,7 @@ public class UtenteServiceTest {
     void testAssignEventErrorWithNonExistentUtenteId() {
         //Given
         Event event1 = new Event("123456", LocalDateTime.now(), "uno", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
-        Utente utente1 = new Utente(12, "unUsername", "");
+        Utente utente1 = new Utente(12, "unUsername", "", true, "admin");
         utente1.addEvent(event1);
 
         given(this.eventRepository.findById("123456")).willReturn(Optional.of(event1));

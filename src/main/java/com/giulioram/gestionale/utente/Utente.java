@@ -3,6 +3,7 @@ package com.giulioram.gestionale.utente;
 import com.giulioram.gestionale.event.Event;
 import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -13,18 +14,25 @@ public class Utente implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
+    @NotEmpty(message = "userName is required")
     private String userName;
+    @NotEmpty(message = "password is required")
     private String password;
+    private boolean enabled;
+    @NotEmpty(message = "roles are required")
+    private String roles;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "owner")
     private List<Event> eventi = new ArrayList<>();
 
     public Utente() {}
 
-    public Utente(Integer id, String userName, String password) {
+    public Utente(Integer id, String userName, String password, boolean enabled, String roles) {
         this.id = id;
         this.userName = userName;
         this.password = password;
+        this.enabled = enabled;
+        this.roles = roles;
     }
 
     public void addEvent(Event evento) {
@@ -43,6 +51,22 @@ public class Utente implements Serializable {
     public void removeAllEvents() {
         eventi.stream().forEach(evento -> evento.setOwner(null));
         this.eventi.clear();
+    }
+
+    public String getRoles() {
+        return roles;
+    }
+
+    public void setRoles(String roles) {
+        this.roles = roles;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public void setEventi(List<Event> eventi) {

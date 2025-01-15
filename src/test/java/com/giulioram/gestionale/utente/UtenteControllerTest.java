@@ -51,9 +51,9 @@ public class UtenteControllerTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(utenteController, "utenteService", utenteService);
-        Utente utente1 = new Utente(1, "uno", "");
-        Utente utente2 = new Utente(2, "due", "");
-        Utente utente3 = new Utente(3, "tre", "");
+        Utente utente1 = new Utente(1, "uno", "", true, "admin");
+        Utente utente2 = new Utente(2, "due", "", true, "admin");
+        Utente utente3 = new Utente(3, "tre", "", true, "admin");
         utenti = new ArrayList<>();
         utenti.add(utente1);
         utenti.add(utente2);
@@ -62,11 +62,8 @@ public class UtenteControllerTest {
 
     @Test
     void testFindUtenteByIdSuccess() throws Exception {
-        Utente utente = new Utente();
-        utente.setId(1);
-        utente.setUserName("franco");
-        utente.setPassword("");
-        when(utenteService.findById(1)).thenReturn(utente);
+        Utente utente1 = new Utente(1, "uno", "", true, "admin");
+        when(utenteService.findById(1)).thenReturn(utente1);
 
         this.mockMvc.perform(get(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -103,32 +100,35 @@ public class UtenteControllerTest {
 
     @Test
     void testAddUtenteSuccess() throws Exception {
-        UtenteDto utenteDto = new UtenteDto(null,
-                "username",
-                "", null);
-        String jsonObj = objectMapper.writeValueAsString(utenteDto);
+        Utente utente = new Utente(123456,
+                "username", "ccc",
+                true, "admin");
 
 
-        Utente e = new Utente();
-        e.setId(123456);
-        e.setUserName("test name");
-        e.setPassword("");
 
-        given(this.utenteService.save(Mockito.any(Utente.class))).willReturn(e);
+//        Utente e = new Utente();
+//        e.setId(123456);
+//        e.setUserName("username");
+//        e.setPassword("");
+
+        String jsonObj = objectMapper.writeValueAsString(utente);
+
+        given(this.utenteService.save(Mockito.any(Utente.class))).willReturn(utente);
 
         this.mockMvc.perform(post(this.baseUrl + "/utenti").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
-                .andExpect(jsonPath("$.data.userName").value(e.getUserName()));
+                .andExpect(jsonPath("$.data.userName").value(utente.getUserName()));
     }
 
     @Test
     void testUpdateUtenteSuccess() throws Exception {
         UtenteDto utenteDto = new UtenteDto(123456,
                                     "username",
-                                    "", null);
+                                    true,
+                "admin", 0);
         String jsonObj = objectMapper.writeValueAsString(utenteDto);
 
         Utente updatedUtente = new Utente();
@@ -150,7 +150,7 @@ public class UtenteControllerTest {
     void testUpdateUtenteErrorWithNonExistentId() throws Exception {
         UtenteDto utenteDto = new UtenteDto(123456,
                 "username",
-                "", null);
+                true, "admin", 0);
         String jsonObj = objectMapper.writeValueAsString(utenteDto);
 
         given(this.utenteService.update(eq(123456), Mockito.any(Utente.class))).willThrow(new ObjectNotFoundException("Utente", 123456));

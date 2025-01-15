@@ -1,12 +1,12 @@
 package com.giulioram.gestionale.utente.dto;
 
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 public record UtenteDto(Integer id,
-                        @NotEmpty
+                        @NotEmpty(message = "userName is required")
                         String userName,
-                        @NotNull
-                        String password,
+                        boolean enabled,
+                        @NotEmpty(message = "roles are required")
+                        String roles,
                         Integer numberOfEvents) {
 }

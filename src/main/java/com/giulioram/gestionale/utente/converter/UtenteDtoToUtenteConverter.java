@@ -12,7 +12,8 @@ public class UtenteDtoToUtenteConverter implements Converter<UtenteDto, Utente> 
         Utente utente = new Utente();
         utente.setId(source.id());
         utente.setUserName(source.userName());
-        utente.setPassword(source.password());
+        utente.setEnabled(source.enabled());
+        utente.setRoles(source.roles());
         return utente;
     }
 }

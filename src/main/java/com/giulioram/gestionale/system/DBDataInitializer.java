@@ -35,16 +35,22 @@ public class DBDataInitializer implements CommandLineRunner {
         //u1.setId(1);
         u1.setUserName("user1");
         u1.setPassword("test");
+        u1.setEnabled(true);
+        u1.setRoles("admin");
         u1.addEvent(event1);
         Utente u2 = new Utente();
         //u2.setId(2);
         u2.setUserName("user2");
         u2.setPassword("test");
+        u2.setEnabled(true);
+        u2.setRoles("admin");
         u2.addEvent(event2);
         Utente u3 = new Utente();
         //u3.setId(3);
         u3.setUserName("user3");
         u3.setPassword("test");
+        u3.setEnabled(true);
+        u3.setRoles("admin");
         u3.addEvent(event3);
 
         utenteRepository.save(u1);
