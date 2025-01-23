@@ -3,20 +3,26 @@ package com.giulioram.gestionale.utente;
 import com.giulioram.gestionale.event.Event;
 import com.giulioram.gestionale.event.EventRepository;
 import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
 @Service
-public class UtenteService {
+public class UtenteService implements UserDetailsService {
 
     private final UtenteRepository utenteRepository;
     private final EventRepository eventRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UtenteService(UtenteRepository utenteRepository, EventRepository eventRepository) {
+    public UtenteService(UtenteRepository utenteRepository, EventRepository eventRepository, PasswordEncoder passwordEncoder) {
         this.utenteRepository = utenteRepository;
         this.eventRepository = eventRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Utente findById(Integer utenteId) {
@@ -28,6 +34,7 @@ public class UtenteService {
     }
 
     public Utente save(Utente utente) {
+        utente.setPassword(passwordEncoder.encode(utente.getPassword()));
         return this.utenteRepository.save(utente);
     }
 
@@ -62,5 +69,12 @@ public class UtenteService {
         utente.addEvent(eventoToBeAssigned);
         utenteRepository.save(utente);
         eventRepository.save(eventoToBeAssigned);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return this.utenteRepository.findByUserName(username)
+                .map(MyUserPrincipal::new)
+                .orElseThrow(() -> new UsernameNotFoundException("Username " + username + " is not found."));
     }
 }

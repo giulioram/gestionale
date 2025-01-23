@@ -1,5 +1,6 @@
 package com.giulioram.gestionale.event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.giulioram.gestionale.enums.CategoryEnum;
 import com.giulioram.gestionale.enums.StatusEnum;
 import com.giulioram.gestionale.utente.Utente;
@@ -16,6 +17,7 @@ public class Event implements Serializable {
 
     @Id
     private String id;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     private LocalDateTime dataEvento;
     private String name;
     private CategoryEnum category;

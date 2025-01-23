@@ -6,6 +6,7 @@ import com.giulioram.gestionale.event.Event;
 import com.giulioram.gestionale.event.EventRepository;
 import com.giulioram.gestionale.utente.Utente;
 import com.giulioram.gestionale.utente.UtenteRepository;
+import com.giulioram.gestionale.utente.UtenteService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +19,11 @@ public class DBDataInitializer implements CommandLineRunner {
 
     private final EventRepository eventRepository;
 
-    private final UtenteRepository utenteRepository;
+    private final UtenteService utenteService;
 
-    public DBDataInitializer(EventRepository eventRepository, UtenteRepository utenteRepository) {
+    public DBDataInitializer(EventRepository eventRepository, UtenteRepository utenteRepository, UtenteService utenteService) {
         this.eventRepository = eventRepository;
-        this.utenteRepository = utenteRepository;
+        this.utenteService = utenteService;
     }
 
     @Override
@@ -49,13 +50,13 @@ public class DBDataInitializer implements CommandLineRunner {
         //u3.setId(3);
         u3.setUserName("user3");
         u3.setPassword("test");
-        u3.setEnabled(true);
-        u3.setRoles("admin");
+        u3.setEnabled(false);
+        u3.setRoles("user");
         u3.addEvent(event3);
 
-        utenteRepository.save(u1);
-        utenteRepository.save(u2);
-        utenteRepository.save(u3);
+        utenteService.save(u1);
+        utenteService.save(u2);
+        utenteService.save(u3);
 
         eventRepository.save(event4);
     }
