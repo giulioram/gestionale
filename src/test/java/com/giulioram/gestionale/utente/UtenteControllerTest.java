@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
 import com.giulioram.gestionale.utente.dto.UtenteDto;
 import org.hamcrest.Matchers;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -17,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +27,9 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
@@ -44,11 +49,13 @@ public class UtenteControllerTest {
 
     List<Utente> utenti;
 
+    String token;
+
     @Value("${api.endpoint.base-url}")
     String baseUrl;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(utenteController, "utenteService", utenteService);
         Utente utente1 = new Utente(1, "uno", "", true, "admin");
@@ -58,6 +65,13 @@ public class UtenteControllerTest {
         utenti.add(utente1);
         utenti.add(utente2);
         utenti.add(utente3);
+        ResultActions resultActions = this.mockMvc
+                .perform(post(this.baseUrl + "/utenti/login")
+                        .with(httpBasic("user1", "test")));
+        MvcResult mvcResult = resultActions.andDo(print()).andReturn();
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        JSONObject json = new JSONObject(contentAsString);
+        this.token = "Bearer " + json.getJSONObject("data").getString("token");
     }
 
     @Test
@@ -65,7 +79,7 @@ public class UtenteControllerTest {
         Utente utente1 = new Utente(1, "uno", "", true, "admin");
         when(utenteService.findById(1)).thenReturn(utente1);
 
-        this.mockMvc.perform(get(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -76,7 +90,7 @@ public class UtenteControllerTest {
     void testFindUtenteByIdNotFound() throws Exception {
         given(utenteService.findById(1)).willThrow(new ObjectNotFoundException("Utente", 1));
 
-        this.mockMvc.perform(get(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Utente with Id 1 :("))
@@ -87,7 +101,7 @@ public class UtenteControllerTest {
     void testFindAllUtentiSuccess() throws Exception {
         given(this.utenteService.findAllUtenti()).willReturn(this.utenti);
 
-        this.mockMvc.perform(get(this.baseUrl + "/utenti").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/utenti").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
@@ -104,18 +118,11 @@ public class UtenteControllerTest {
                 "username", "ccc",
                 true, "admin");
 
-
-
-//        Utente e = new Utente();
-//        e.setId(123456);
-//        e.setUserName("username");
-//        e.setPassword("");
-
         String jsonObj = objectMapper.writeValueAsString(utente);
 
         given(this.utenteService.save(Mockito.any(Utente.class))).willReturn(utente);
 
-        this.mockMvc.perform(post(this.baseUrl + "/utenti").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(this.baseUrl + "/utenti").contentType(MediaType.APPLICATION_JSON).header("Authorization", this.token).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -138,7 +145,7 @@ public class UtenteControllerTest {
 
         given(this.utenteService.update(eq(123456), Mockito.any(Utente.class))).willReturn(updatedUtente);
 
-        this.mockMvc.perform(put(this.baseUrl + "/utenti/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/123456").contentType(MediaType.APPLICATION_JSON).header("Authorization", this.token).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -155,7 +162,7 @@ public class UtenteControllerTest {
 
         given(this.utenteService.update(eq(123456), Mockito.any(Utente.class))).willThrow(new ObjectNotFoundException("Utente", 123456));
 
-        this.mockMvc.perform(put(this.baseUrl + "/utenti/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/123456").contentType(MediaType.APPLICATION_JSON).header("Authorization", this.token).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Utente with Id 123456 :("))
@@ -166,7 +173,7 @@ public class UtenteControllerTest {
     void testDeleteUtenteSuccess() throws Exception {
         doNothing().when(utenteService).delete(1);
 
-        this.mockMvc.perform(delete(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -177,7 +184,7 @@ public class UtenteControllerTest {
     void testDeleteUtenteErrorWithNonExistentId() throws Exception {
         doThrow(new ObjectNotFoundException("Utente", 1)).when(this.utenteService).delete(1);
 
-        this.mockMvc.perform(delete(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/utenti/1").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Utente with Id 1 :("))
@@ -189,7 +196,7 @@ public class UtenteControllerTest {
         //Given
         doNothing().when(this.utenteService).assignEvent(2, "123456");
         //When & Then
-        this.mockMvc.perform(put(this.baseUrl + "/utenti/2/events/123456").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/2/events/123456").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Event Assignment Success"))
@@ -201,7 +208,7 @@ public class UtenteControllerTest {
         //Given
         doThrow(new ObjectNotFoundException("utente", 5)).when(this.utenteService).assignEvent(5, "123456");
         //When & Then
-        this.mockMvc.perform(put(this.baseUrl + "/utenti/5/events/123456").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/5/events/123456").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find utente with Id 5 :("))
@@ -213,7 +220,7 @@ public class UtenteControllerTest {
         //Given
         doThrow(new ObjectNotFoundException("event", "123457")).when(this.utenteService).assignEvent(9, "123457");
         //When & Then
-        this.mockMvc.perform(put(this.baseUrl + "/utenti/9/events/123457").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/utenti/9/events/123457").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find event with Id 123457 :("))

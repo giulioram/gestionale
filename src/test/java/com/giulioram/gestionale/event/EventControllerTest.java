@@ -1,12 +1,12 @@
 package com.giulioram.gestionale.event;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.giulioram.gestionale.enums.CategoryEnum;
 import com.giulioram.gestionale.enums.StatusEnum;
 import com.giulioram.gestionale.event.dto.EventDto;
 import com.giulioram.gestionale.system.exception.ObjectNotFoundException;
 import org.hamcrest.Matchers;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -20,10 +20,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -32,6 +35,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
@@ -39,6 +44,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EventControllerTest {
 
     List<Event> events;
+
+    String token;
 
     @Autowired
     MockMvc mockMvc;
@@ -56,7 +63,7 @@ class EventControllerTest {
     String baseUrl;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(eventController, "eventService", eventService);
         Event event1 = new Event("1", LocalDateTime.now(), "uno", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
@@ -66,6 +73,14 @@ class EventControllerTest {
         events.add(event1);
         events.add(event2);
         events.add(event3);
+
+        ResultActions resultActions = this.mockMvc
+                .perform(post(this.baseUrl + "/utenti/login")
+                        .with(httpBasic("user1", "test")));
+        MvcResult mvcResult = resultActions.andDo(print()).andReturn();
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        JSONObject json = new JSONObject(contentAsString);
+        this.token = "Bearer " + json.getJSONObject("data").getString("token");
     }
 
     @Test
@@ -127,7 +142,7 @@ class EventControllerTest {
 
         given(this.eventService.save(Mockito.any(Event.class))).willReturn(e);
 
-        this.mockMvc.perform(post(this.baseUrl + "/events").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(this.baseUrl + "/events").contentType(MediaType.APPLICATION_JSON).header("Authorization", this.token).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -155,7 +170,7 @@ class EventControllerTest {
 
         given(this.eventService.update(eq("123456"), Mockito.any(Event.class))).willReturn(updatedEvent);
 
-        this.mockMvc.perform(put(this.baseUrl + "/events/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/events/123456").contentType(MediaType.APPLICATION_JSON).header("Authorization", this.token).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -176,7 +191,7 @@ class EventControllerTest {
 
         given(this.eventService.update(eq("123456"), Mockito.any(Event.class))).willThrow(new ObjectNotFoundException("Event", "123456"));
 
-        this.mockMvc.perform(put(this.baseUrl + "/events/123456").contentType(MediaType.APPLICATION_JSON).content(jsonObj).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(this.baseUrl + "/events/123456").contentType(MediaType.APPLICATION_JSON).header("Authorization", this.token).content(jsonObj).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Event with Id 123456 :("))
@@ -187,7 +202,7 @@ class EventControllerTest {
     void testDeleteEventSuccess() throws Exception {
         doNothing().when(eventService).delete("1");
 
-        this.mockMvc.perform(delete(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -198,7 +213,7 @@ class EventControllerTest {
     void testDeleteEventErrorWithNonExistentId() throws Exception {
         doThrow(new ObjectNotFoundException("Event", "1")).when(this.eventService).delete("1");
 
-        this.mockMvc.perform(delete(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(this.baseUrl + "/events/1").accept(MediaType.APPLICATION_JSON).header("Authorization", this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find Event with Id 1 :("))

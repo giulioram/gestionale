@@ -22,7 +22,9 @@ public class Utente implements Serializable {
     @NotEmpty(message = "roles are required")
     private String roles;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, mappedBy = "owner")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+            mappedBy = "owner",
+            fetch = FetchType.EAGER)
     private List<Event> eventi = new ArrayList<>();
 
     public Utente() {}
