@@ -28,8 +28,8 @@ public class DBDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        Event event1 = new Event("1", LocalDateTime.now(), "uno", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
-        Event event2 = new Event("2", LocalDateTime.now(), "due", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
+        Event event1 = new Event("1", LocalDateTime.now(), "fare la spesa", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
+        Event event2 = new Event("2", LocalDateTime.now(), "cacare", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
         Event event3 = new Event("3", LocalDateTime.now(), "tre", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
         Event event4 = new Event("4", LocalDateTime.now(), "quattro", CategoryEnum.EVENTO, StatusEnum.NEXT, null);
         Utente u1 = new Utente();
