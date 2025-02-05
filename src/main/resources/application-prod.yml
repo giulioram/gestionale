@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: #Url of mysql in azure
+    username: # admin username of MySql
+    password: # admin password of MySql
+  jpa:
+    hibernate:
+      ddl-auto: none # Turn DDL auto generation.
