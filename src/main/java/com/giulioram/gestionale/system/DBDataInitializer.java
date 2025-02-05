@@ -8,12 +8,14 @@ import com.giulioram.gestionale.utente.Utente;
 import com.giulioram.gestionale.utente.UtenteRepository;
 import com.giulioram.gestionale.utente.UtenteService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
+@Profile("dev")
 public class DBDataInitializer implements CommandLineRunner {
 
 
